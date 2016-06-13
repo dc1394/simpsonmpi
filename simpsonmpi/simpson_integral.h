@@ -1,124 +1,142 @@
+ï»¿/*! \file simpson.h
+    \brief MPIã§ä¸¦åˆ—åŒ–ã—ã¦simpsonã®å…¬å¼ã§æ•°å€¤ç©åˆ†ã‚’è¡Œã†ã‚¯ãƒ©ã‚¹ã®å®£è¨€ã¨å®Ÿè£…
+
+    Copyright Â©  2016 @dc1394 All Rights Reserved.
+*/
+#ifndef _SIMPSONMPI_H_
+#define _SIMPSONMPI_H_
+
+#pragma once
+
 #include "functional.h"
-#include <cstdint>
-#include <tuple>
+#include <cstdint>                      // for std::int32_t
 #include <mpi.h>
+#include <boost/numeric/interval.hpp>   // boost::numeric::interval
 
 namespace simpsonmpi {
     template <typename FUNCTYPE>
     class SimpsonMpi final {
-    public:
-        // #region ƒRƒ“ƒXƒgƒ‰ƒNƒ^
+        // #region ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ãƒ»ãƒ‡ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
 
+    public:
         //! A constructor.
         /*!
-            —Bˆê‚ÌƒRƒ“ƒXƒgƒ‰ƒNƒ^
-            \param n simpson‚ÌŒö®‚Ì•ª“_
+            å”¯ä¸€ã®ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
+            \param n simpsonã®å…¬å¼ã®åˆ†ç‚¹
         */
-        SimpsonMpi::SimpsonMpi(myfunctional::Functional<FUNCTYPE> const & func, std::int32_t n, double x1, double x2);
+        SimpsonMpi(myfunctional::Functional<FUNCTYPE> const & func, std::int32_t n, double x1, double x2)
+            : func_(func), n_(n), x1_(x1), x2_(x2), dh_((x2_ - x1_) / static_cast<double>(n_)) {}
 
-        // #endregion ƒRƒ“ƒXƒgƒ‰ƒNƒ^
-
-        // #region publicƒƒ“ƒoŠÖ”
+        //! A destructor.
+        /*!
+            ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆãƒ‡ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
+        */
+        ~SimpsonMpi() = default;
+        
+        // #endregion ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ãƒ»ãƒ‡ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
+        
+        // #region publicãƒ¡ãƒ³ãƒé–¢æ•°
                 
         void operator()() const;
 
-        // #endregion publicƒƒ“ƒoŠÖ”
+        // #endregion publicãƒ¡ãƒ³ãƒé–¢æ•°
+
+        // #region privateãƒ¡ãƒ³ãƒé–¢æ•°
 
     private:
-
-        // #region privateƒƒ“ƒoŠÖ”
-
-        //! A private member function.
+        //! A private member function (const).
         /*!
-            ƒvƒƒZƒX‚Ìƒ‰ƒ“ƒN‚Æ‘S‘Ì‚Ìè‡’l‚ğw’è‚µ‚ÄAƒvƒƒZƒX‚Ì’S“–—Ìˆæ‚ğŒˆ’è‚·‚é
-            \param pnum ‘SƒvƒƒZƒX”
-            \param rank ƒvƒƒZƒX‚Ìƒ‰ƒ“ƒN
-            \param xmin è‡’l‘S‘Ì‚ÌÅ¬’l
-            \param xmax è‡’l‘S‘Ì‚ÌÅ‘å’l
-            \return ƒvƒƒZƒX‚Ì’S“–•ªŠ„”AƒvƒƒZƒX‚Ì’S“–è‡’l‚ÌÅ¬’lAƒvƒƒZƒX‚Ì’S“–è‡’l‚ÌÅ‘å’l‚Ì‘g‚Ìstd::tuple
+            ãƒ—ãƒ­ã‚»ã‚¹ã®ãƒ©ãƒ³ã‚¯ã¨å…¨ä½“ã®é–¾å€¤ã‚’æŒ‡å®šã—ã¦ã€ãƒ—ãƒ­ã‚»ã‚¹ã®æ‹…å½“é ˜åŸŸã‚’æ±ºå®šã™ã‚‹
+            \param pnum å…¨ãƒ—ãƒ­ã‚»ã‚¹æ•°
+            \param rank ãƒ—ãƒ­ã‚»ã‚¹ã®ãƒ©ãƒ³ã‚¯
+            \return è©²å½“ãƒ—ãƒ­ã‚»ã‚¹ãŒç©åˆ†ã®å’Œã‚’æ±‚ã‚ã‚‹åŒºé–“
         */
-        std::tuple<std::int32_t, double, double> assign(std::int32_t pnum, std::int32_t rank, double xmin, double xmax) const;
+        boost::numeric::interval<std::int32_t> assign(std::int32_t pnum, std::int32_t rank) const;
         
-        //! A public member function (template function).
+        //! A private member function (const).
         /*!
-            Ï•ª‘ÎÛŠÖ”‚ÌÏ•ª’l‚ğè‡’l[x1, x2]‚ğnŒÂ‚Ì—Ìˆæ‚É•ªŠ„‚µSimpson‚ÌŒö®‚É‚æ‚Á‚Ä”’lÏ•ª‚ğÀs‚·‚é
-            \param n •ªŠ„”
-            \param x1 Ï•ª‚Ì‰º’[
-            \param x2 Ï•ª‚Ìã’[
-            \return Ï•ª’l
+            æŒ‡å®šã—ãŸåŒºé–“ã«ã¤ã„ã¦ã€Simpsonã®å…¬å¼ã§ç·å’Œã‚’æ±‚ã‚ã‚‹
+            \param interval è©²å½“ãƒ—ãƒ­ã‚»ã‚¹ãŒå’Œã‚’æ±‚ã‚ã‚‹åŒºé–“
+            \return ç©åˆ†å€¤
         */
-        double simpson(std::int32_t n, double x1, double x2) const;
+        double simpson(boost::numeric::interval<std::int32_t> const & interval) const;
         
-        // #endregion privateƒƒ“ƒoŠÖ”
+        // #endregion privateãƒ¡ãƒ³ãƒé–¢æ•°
 
-        // #region ƒƒ“ƒo•Ï”
+        // #region ãƒ¡ãƒ³ãƒå¤‰æ•°
         
         //! A private member variable (constant).
         /*!
-            ”íÏ•ªŠÖ”
+            è¢«ç©åˆ†é–¢æ•°
         */
         myfunctional::Functional<FUNCTYPE> const func_;
 
         //! A private member variable (constant).
         /*!
-            simpson‚ÌŒö®‚ÌÏ•ª“_
+            simpsonã®å…¬å¼ã®ç©åˆ†ç‚¹
         */
         std::int32_t const n_;
 
         //! A private member variable (constant).
         /*!
-            Ï•ª‚Ì‰º’[
+            ç©åˆ†ã®ä¸‹ç«¯
         */
         double const x1_;
 
         //! A private member variable (constant).
         /*!
-            Ï•ª‚Ìã’[
+            ç©åˆ†ã®ä¸Šç«¯
         */
         double const x2_;
         
-        // #endregion ƒƒ“ƒo•Ï”
+        //! A private member variable (constant).
+        /*!
+            ç©åˆ†ã®å¾®å°åŒºé–“
+        */
+        double const dh_;
+        
+        // #endregion ãƒ¡ãƒ³ãƒå¤‰æ•°
 
-        // #region ‹Ö~‚³‚ê‚½ƒRƒ“ƒXƒgƒ‰ƒNƒ^Eƒƒ“ƒoŠÖ”
+        // #region ç¦æ­¢ã•ã‚ŒãŸã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ãƒ»ãƒ¡ãƒ³ãƒé–¢æ•°
 
         //! A private constructor (deleted).
         /*!
-            ƒfƒtƒHƒ‹ƒgƒRƒ“ƒXƒgƒ‰ƒNƒ^i‹Ö~j
+            ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ï¼ˆç¦æ­¢ï¼‰
         */
         SimpsonMpi() = delete;
 
         //! A private copy constructor (deleted).
         /*!
-            ƒRƒs[ƒRƒ“ƒXƒgƒ‰ƒNƒ^i‹Ö~j
+            ã‚³ãƒ”ãƒ¼ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ï¼ˆç¦æ­¢ï¼‰
         */
         SimpsonMpi(SimpsonMpi const &) = delete;
 
         //! A private member function (deleted).
         /*!
-            operator=()‚ÌéŒ¾i‹Ö~j
-            \param ƒRƒs[Œ³‚ÌƒIƒuƒWƒFƒNƒg
-            \return ƒRƒs[Œ³‚ÌƒIƒuƒWƒFƒNƒg
+            operator=()ã®å®£è¨€ï¼ˆç¦æ­¢ï¼‰
+            \param ã‚³ãƒ”ãƒ¼å…ƒã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
+            \return ã‚³ãƒ”ãƒ¼å…ƒã®ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
         */
         SimpsonMpi & operator=(SimpsonMpi const &) = delete;
 
-        // #endregion ‹Ö~‚³‚ê‚½ƒRƒ“ƒXƒgƒ‰ƒNƒ^Eƒƒ“ƒoŠÖ”
+        // #endregion ç¦æ­¢ã•ã‚ŒãŸã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ãƒ»ãƒ¡ãƒ³ãƒé–¢æ•°
     };
 
-    template <typename FUNCTYPE>
-    SimpsonMpi<FUNCTYPE>::SimpsonMpi(myfunctional::Functional<FUNCTYPE> const & func, std::int32_t n, double x1, double x2)
-        : func_(func), n_(n), x1_(x1), x2_(x2)
-    {
-    }
+    // #region templateãƒ¡ãƒ³ãƒé–¢æ•°ã®å®Ÿè£…
 
     template <typename FUNCTYPE>
-    std::tuple<std::int32_t, double, double> SimpsonMpi<FUNCTYPE>::assign(std::int32_t pnum, std::int32_t rank, double xmin, double xmax) const
+    boost::numeric::interval<std::int32_t> SimpsonMpi<FUNCTYPE>::assign(std::int32_t pnum, std::int32_t rank) const
     {
-        auto const localn = n_ / pnum;
-        auto const h = (xmax - xmin) / static_cast<double>(n_);
-        auto const localxmin = xmin + rank * localn * h;
-        auto const localxmax = localxmin + localn * h;
+        auto const nmax = n_ / 2;
+        std::int32_t localnmax;
+        if (rank == pnum - 1) {
+            localnmax = nmax;
+        }
+        else {
+            localnmax = nmax / pnum * (rank + 1);
+        }
 
-        return std::make_tuple(localn, localxmin, localxmax);
+        return boost::numeric::interval<std::int32_t>(nmax / pnum * rank, localnmax);
     }
 
     template <typename FUNCTYPE>
@@ -126,75 +144,69 @@ namespace simpsonmpi {
     {
         MPI_Init(nullptr, nullptr);
 
-        std::int32_t my_rank;                       // ©•ª‚ÌƒvƒƒZƒXƒ‰ƒ“ƒN
-        // rankæ“¾
+        std::int32_t my_rank;                       // è‡ªåˆ†ã®ãƒ—ãƒ­ã‚»ã‚¹ãƒ©ãƒ³ã‚¯
+        // rankå–å¾—
         MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
-        std::int32_t p_num;                         // ƒvƒƒZƒX”
-        // ƒvƒƒZƒX”æ“¾
+        std::int32_t p_num;                         // ãƒ—ãƒ­ã‚»ã‚¹æ•°
+        // ãƒ—ãƒ­ã‚»ã‚¹æ•°å–å¾—
         MPI_Comm_size(MPI_COMM_WORLD, &p_num);
                 
-        std::int32_t localn;                        // ƒvƒƒZƒbƒT–ˆ‚Ìè‡’l‚Ì•ªŠ„”
-        double localxmax;                           // ƒvƒƒZƒbƒT–ˆ‚Ìè‡’l‚ÌÅ‘å’l	
-        double localxmin;                           // ƒvƒƒZƒbƒT–ˆ‚Ìè‡’l‚ÌÅ¬’l
-
-        // ƒvƒƒZƒX–ˆ‚Ìè‡’l‚ÌZo
-        std::tie(localn, localxmin, localxmax) = assign(p_num, my_rank, x1_, x2_);
-
-        // ƒvƒƒZƒX–ˆ‚ÉÏ•ª
-        auto local_result = simpson(localn, localxmin, localxmax);
+        std::int32_t localnmin;                     // ãƒ—ãƒ­ã‚»ãƒƒã‚µæ¯ã®é–¾å€¤ã®åˆ†å‰²æ•°
+        std::int32_t localnmax;                     // ãƒ—ãƒ­ã‚»ãƒƒã‚µæ¯ã®é–¾å€¤ã®åˆ†å‰²æ•°
         
-        double result;                              // ‘S‘Ì‚ÌÏ•ª’l
+        auto const start = MPI_Wtime();             // æ™‚é–“æ¸¬å®šé–‹å§‹
+
+        // ãƒ—ãƒ­ã‚»ã‚¹æ¯ã®é–¾å€¤ã®ç®—å‡ºåŠã³ç©åˆ†
+        auto local_result = simpson(assign(p_num, my_rank));
+        
+        double result;                              // å…¨ä½“ã®ç©åˆ†å€¤
         std::int32_t dest = 0;
         std::int32_t tag = 0;
 
-        // ŠeƒvƒƒZƒbƒT‚ÌÏ•ªŒ‹‰Ê‚ğûW
+        // å„ãƒ—ãƒ­ã‚»ãƒƒã‚µã®ç©åˆ†çµæœã‚’åé›†
         if (!my_rank) {
-            // ƒvƒƒZƒX0‚Í‘S‚Ä‚Ì‘¼ƒvƒƒZƒX‚©‚çŒ‹‰Ê‚ğóM
-            fprintf(stdout, "P%d :: x = [%f,%f] : n = %d : s = %f\n", 0,
-                localxmin, localxmax, localn, local_result);
             result = local_result;
-            for (auto source = 1; source < p_num; source++)
-            {
+            for (auto source = 1; source < p_num; source++) {
                 MPI_Status status;
-                // Ï•ªŒ‹‰Ê‚ğûW
+                // ç©åˆ†çµæœã‚’åé›†
                 MPI_Recv(&local_result, 1, MPI_DOUBLE, source, tag, MPI_COMM_WORLD, &status);
-                
-                // ƒvƒƒZƒX–ˆ‚ÌŒ‹‰Êo—Í
-                std::tie(localn, localxmin, localxmax) = assign(p_num, source, x1_, x2_);
-                
-                fprintf(stdout, "P%d :: x = [%f,%f] : n = %d : s = %f\n",
-                    source, localxmin, localxmax, localn,
-                    local_result);
-
+                                
                 result += local_result;
             }
         }
         else {
-            // ƒvƒƒZƒX0ˆÈŠO‚ÍƒvƒƒZƒX0‚ÖŒ‹‰Ê‚ğ‘—M
+            // ãƒ—ãƒ­ã‚»ã‚¹0ä»¥å¤–ã¯ãƒ—ãƒ­ã‚»ã‚¹0ã¸çµæœã‚’é€ä¿¡
             MPI_Send(&local_result, 1, MPI_DOUBLE, dest, tag, MPI_COMM_WORLD);
         }
 
         if (!my_rank) {
-            fprintf(stdout, "TOTAL :: x = [%f,%f] : n = %d : S = %f\n", 1.0, 4.0, N, result);
+            result *= (dh_ / 3.0);
+            fprintf(stdout, "TOTAL :: x = [%f,%f] : n = %d : S = %.15f\n", 1.0, 4.0, N, result);
+            auto const finish = MPI_Wtime();        // æ™‚é–“æ¸¬å®šçµ‚äº†
+
+            printf("Elapsed time = %f[sec]\n", finish - start);
         }
 
         MPI_Finalize();
     }
 
     template <typename FUNCTYPE>
-    double SimpsonMpi<FUNCTYPE>::simpson(std::int32_t n, double x1, double x2) const
+    double SimpsonMpi<FUNCTYPE>::simpson(boost::numeric::interval<std::int32_t> const & interval) const
     {
         auto sum = 0.0;
-        auto const dh = (x2 - x1) / static_cast<double>(n);
 
-        for (auto i = 0; i < n; i += 2) {
-            auto const f0 = func_(x1 + static_cast<double>(i) * dh);
-            auto const f1 = func_(x1 + static_cast<double>(i + 1) * dh);
-            auto const f2 = func_(x1 + static_cast<double>(i + 2) * dh);
+        for (auto i = interval.lower(); i < interval.upper(); i++) {
+            auto const f0 = func_(x1_ + static_cast<double>(2 * i) * dh_);
+            auto const f1 = func_(x1_ + static_cast<double>(2 * i + 1) * dh_);
+            auto const f2 = func_(x1_ + static_cast<double>(2 * i + 2) * dh_);
             sum += (f0 + 4.0 * f1 + f2);
         }
 
-        return sum * dh / 3.0;
+        return sum;
     }
+
+    // #endregion templateãƒ¡ãƒ³ãƒé–¢æ•°ã®å®Ÿè£…
 }
+
+#endif  // _SIMPSON_H_
