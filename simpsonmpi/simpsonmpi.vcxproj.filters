@@ -15,10 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="simpson_integral.h">
+    <ClInclude Include="functional.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="functional.h">
+    <ClInclude Include="simpson_integral_mpi.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

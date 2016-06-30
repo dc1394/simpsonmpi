@@ -158,7 +158,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="functional.h" />
-    <ClInclude Include="simpson_integral.h" />
+    <ClInclude Include="simpson_integral_mpi.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
