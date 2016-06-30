@@ -10,6 +10,7 @@
 
 #include "functional.h"
 #include <cstdint>                      // for std::int32_t
+#include <iostream>                     // for std::cout
 #include <mpi.h>
 #include <boost/numeric/interval.hpp>   // boost::numeric::interval
 
@@ -130,8 +131,7 @@ namespace simpsonmpi {
         MPI_Init(nullptr, nullptr);
 
         std::int32_t my_rank;                       // 自分のプロセスランク
-                                                    // rank取得
-        MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+        MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);    // rank取得
 
         std::int32_t p_num;                         // プロセス数
                                                     // プロセス数取得
@@ -142,14 +142,14 @@ namespace simpsonmpi {
 
         auto const start = MPI_Wtime();             // 時間測定開始
 
-                                                    // プロセス毎の閾値の算出及び積分
+        // プロセス毎の閾値の算出及び積分
         auto local_result = simpson(assign(p_num, my_rank));
 
         double result;                              // 全体の積分値
         std::int32_t dest = 0;
         std::int32_t tag = 0;
 
-        // 各プロセッサの積分結果を収集
+        // プロセス0は各プロセッサの積分結果を収集
         if (!my_rank) {
             result = local_result;
             for (auto source = 1; source < p_num; source++) {
@@ -165,12 +165,13 @@ namespace simpsonmpi {
             MPI_Send(&local_result, 1, MPI_DOUBLE, dest, tag, MPI_COMM_WORLD);
         }
 
+        // プロセス0で結果出力
         if (!my_rank) {
             result *= (dh_ / 3.0);
-            fprintf(stdout, "TOTAL :: x = [%f,%f] : n = %d : S = %.15f\n", 1.0, 4.0, N, result);
+            //std::cout << n << "分割\nOpenMPで並列化：" << std::setprecision(DIGIT) << result << '\n';
             auto const finish = MPI_Wtime();        // 時間測定終了
 
-            printf("Elapsed time = %f[sec]\n", finish - start);
+            //printf("Elapsed time = %f[sec]\n", finish - start);
         }
 
         MPI_Finalize();
