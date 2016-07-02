@@ -12,6 +12,7 @@
 #include <cstdint>                      // for std::int32_t
 #include <iostream>                     // for std::cout
 #include <mpi.h>
+#include <boost/format.hpp>             // for boost::format
 #include <boost/numeric/interval.hpp>   // boost::numeric::interval
 
 namespace simpsonmpi {
@@ -159,6 +160,7 @@ namespace simpsonmpi {
 
                 result += local_result;
             }
+            result *= (dh_ / 3.0);
         }
         else {
             // プロセス0以外はプロセス0へ結果を送信
@@ -167,11 +169,11 @@ namespace simpsonmpi {
 
         // プロセス0で結果出力
         if (!my_rank) {
-            result *= (dh_ / 3.0);
-            //std::cout << n << "分割\nOpenMPで並列化：" << std::setprecision(DIGIT) << result << '\n';
             auto const finish = MPI_Wtime();        // 時間測定終了
 
-            //printf("Elapsed time = %f[sec]\n", finish - start);
+            std::cout << boost::format("分割数：%d（積分点：%d）\n") % n_ % (n_ / 2);
+            std::cout << boost::format("積分結果：%.15f\n") % result;
+            std::cout << boost::format("elapsed time = %.4f (msec)\n") % (1000.0 * (finish - start));
         }
 
         MPI_Finalize();
@@ -202,9 +204,9 @@ namespace simpsonmpi {
         auto sum = 0.0;
 
         for (auto i = interval.lower(); i < interval.upper(); i++) {
-            auto const f0 = func_(x1_ + static_cast<double>(2 * i) * dh_);
-            auto const f1 = func_(x1_ + static_cast<double>(2 * i + 1) * dh_);
-            auto const f2 = func_(x1_ + static_cast<double>(2 * i + 2) * dh_);
+            auto const f0 = func_(x1_ + static_cast<double>(i * 2) * dh_);
+            auto const f1 = func_(x1_ + static_cast<double>(i * 2 + 1) * dh_);
+            auto const f2 = func_(x1_ + static_cast<double>(i * 2 + 2) * dh_);
             sum += (f0 + 4.0 * f1 + f2);
         }
 

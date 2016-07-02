@@ -143,6 +143,8 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <OptimizeForWindowsApplication>true</OptimizeForWindowsApplication>
       <FlushDenormalResultsToZero>true</FlushDenormalResultsToZero>
+      <GenerateAlternateCodePaths>AVX</GenerateAlternateCodePaths>
+      <UseProcessorExtensions>AVX</UseProcessorExtensions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

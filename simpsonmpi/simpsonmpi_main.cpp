@@ -1,4 +1,4 @@
-﻿#include "simpson_integral.h"
+﻿#include "simpson_integral_mpi.h"
 #include <iostream>
 
 namespace {
